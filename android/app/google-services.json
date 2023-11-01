@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "238602368631",
+    "project_id": "juiceproject-5b834",
+    "storage_bucket": "juiceproject-5b834.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:238602368631:android:169d0b51c38a834449b872",
+        "android_client_info": {
+          "package_name": "com.example.the_juice"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "238602368631-qh4mhalmum4vsrb834orap00huep7e3f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.the_juice",
+            "certificate_hash": "14d0d21a9c33758da573c66ee3471275cf070b66"
+          }
+        },
+        {
+          "client_id": "238602368631-ft0q02s5dblhckh368ldp76inq85d4l9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3VYGxbnRMtMEYSN6qAcjLuWi3M5_ppmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "238602368631-ft0q02s5dblhckh368ldp76inq85d4l9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
