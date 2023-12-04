@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:the_juice/screens/home.dart';
+import 'package:the_juice/controllers/user_repository.dart';
+import 'package:the_juice/models/usermodel.dart';
 import 'package:the_juice/screens/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:the_juice/sharepreferencehelper.dart';
+import 'package:the_juice/screens/toggle.dart';
+import 'package:toggle_switch/toggle_switch.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -18,14 +21,20 @@ class _SignUpPageState extends State<SignUpPage> {
   TextEditingController passwordController = TextEditingController();
   TextEditingController mobileController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final userRepo = Get.put(UserRepository());
+  String? gender;
+
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
+          //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 50),
+              padding: EdgeInsets.only(top: screenHeight * 0.06),
               child: Center(
                 child: Column(
                   children: [
@@ -45,11 +54,9 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
             ),
-            const SizedBox(
-              height: 20,
-            ),
             Padding(
-              padding: const EdgeInsets.only(left: 15),
+              padding: EdgeInsets.only(
+                  left: screenWidth * 0.05, top: screenHeight * 0.02),
               child: Align(
                 alignment: Alignment.topLeft,
                 child: Text(
@@ -59,12 +66,12 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.only(left: 15.0),
+            Padding(
+              padding: EdgeInsets.only(left: screenWidth * 0.05),
               child: Align(
                 alignment: Alignment.topLeft,
                 child: Text(
-                  "Looks like you don't have account already.",
+                  "Looks like you don't have an account already.",
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
                 ),
               ),
@@ -72,7 +79,7 @@ class _SignUpPageState extends State<SignUpPage> {
             Padding(
               padding: const EdgeInsets.only(left: 30, right: 30),
               child: Center(
-                  heightFactor: 1.2,
+                  heightFactor: screenHeight * 0.00132,
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -98,8 +105,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             }
                           },
                         ),
-                        const SizedBox(
-                          height: 30,
+                        SizedBox(
+                          height: screenHeight * 0.035,
                         ),
                         TextFormField(
                           controller: usernameController,
@@ -122,8 +129,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             }
                           },
                         ),
-                        const SizedBox(
-                          height: 30,
+                        SizedBox(
+                          height: screenHeight * 0.035,
                         ),
                         TextFormField(
                           controller: mobileController,
@@ -149,8 +156,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             }
                           },
                         ),
-                        const SizedBox(
-                          height: 10,
+                        SizedBox(
+                          height: screenHeight * 0.01,
                         ),
                         TextFormField(
                           controller: passwordController,
@@ -159,6 +166,8 @@ class _SignUpPageState extends State<SignUpPage> {
                           decoration: const InputDecoration(
                               prefixIcon: Icon(Icons.lock_outline_sharp),
                               hintText: 'Password',
+                              helperText:
+                                  "* Password should be atleat 6 characters",
                               focusColor: Colors.black,
                               fillColor: Colors.black,
                               focusedBorder: UnderlineInputBorder(
@@ -166,36 +175,76 @@ class _SignUpPageState extends State<SignUpPage> {
                           validator: (value) {
                             if (value!.isEmpty) {
                               return 'Enter password';
+                            } else if (value.length < 6) {
+                              return "Password length should be atleat 6 characters";
                             } else {
                               return null;
                             }
                           },
                         ),
-                        const SizedBox(
-                          height: 20,
+                        SizedBox(
+                          height: screenHeight * 0.035,
+                        ),
+                        Align(
+                          alignment: AlignmentDirectional.bottomStart,
+                          child: ToggleSwitch(
+                            minWidth: 80.0,
+                            minHeight: 40.0,
+                            initialLabelIndex: 0,
+                            cornerRadius: 30.0,
+                            totalSwitches: 2,
+                            activeBgColor: [Colors.black],
+                            activeFgColor: Colors.white,
+                            labels: ['Male', 'Female'],
+                            onToggle: (index) {
+                              if (index == 0) {
+                                gender = 'Male';
+                                print("@@@@@@@@@@@$index@@@@@@@@$gender");
+                              } else {
+                                gender = 'Female';
+                                print("@@@@@@@@@@@$index@@@@@@@@$gender");
+                              }
+                            },
+                          ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(right: 10),
+                          padding:  EdgeInsets.only(right: screenWidth*0.02,top: screenHeight*0.03),
                           child: Align(
                             alignment: Alignment.bottomRight,
                             child: ElevatedButton(
                               onPressed: () async {
+                                if(_formKey.currentState!.validate()){
                                 try {
-                                  final UserCredential userCredential =
-                                      await FirebaseAuth.instance
-                                          .createUserWithEmailAndPassword(
-                                              email: usernameController.text,
-                                              password:
-                                                  passwordController.text);
-                                                  SharedPreferencesHelper.setUserName(userName:nameController.text);
-                                  Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const HomePage()));
+                                  final email = usernameController.text.trim();
+                                  bool userExists =
+                                      await userRepo.isUserExists(email);
+                                  if (userExists) {
+                                    Get.snackbar("The Juice",
+                                        "User with the same email already exists.");
+                                  } else {
+                                    final user = UserModel(
+                                      name: nameController.text.trim(),
+                                      email: usernameController.text.trim(),
+                                      mobile: mobileController.text.toString(),
+                                      gender: gender,
+                                    );
+                                    await userRepo.createUser(user);
+                                    final UserCredential userCredential =
+                                        await FirebaseAuth.instance
+                                            .createUserWithEmailAndPassword(
+                                                email: usernameController.text,
+                                                password:
+                                                    passwordController.text);
+                                    Get.snackbar("The Juice",
+                                        "Welcome, you have successfully registered.");
+                                    Get.off(() => const ToggleScreen());
+                                  }
                                 } catch (error) {
                                   print("Error: $error");
+                                  Get.snackbar("The Juice",
+                                      "User can't be registered try after sometime.");
                                 }
+                              }
                               },
                               style: ButtonStyle(
                                 backgroundColor:
@@ -213,32 +262,27 @@ class _SignUpPageState extends State<SignUpPage> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(
-                              top: 60, left: 40, right: 30),
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: Row(
-                              children: [
-                                const Text(
-                                  'Already have an account?',
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                                TextButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const LoginPage()));
-                                    },
-                                    child: const Text(
-                                      "Login",
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600),
-                                    ))
-                              ],
-                            ),
+                          padding: EdgeInsets.only(
+                            top: screenHeight * 0.05,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'Already have an account?',
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              TextButton(
+                                  onPressed: () {
+                                    Get.to(() => LoginPage());
+                                  },
+                                  child: const Text(
+                                    "Login",
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600),
+                                  ))
+                            ],
                           ),
                         )
                       ],

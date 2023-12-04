@@ -1,8 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:the_juice/screens/home.dart';
+import 'package:the_juice/controllers/user_repository.dart';
+import 'package:the_juice/screens/forgot_password.dart';
 import 'package:the_juice/screens/signup.dart';
+import 'package:the_juice/screens/toggle.dart';
 import 'package:the_juice/sharepreferencehelper.dart';
 
 class LoginPage extends StatefulWidget {
@@ -13,6 +16,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+    final profileController = Get.put(UserRepository());
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -116,7 +120,9 @@ class _LoginPageState extends State<LoginPage> {
                         Align(
                             alignment: Alignment.bottomLeft,
                             child: TextButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  Get.to(()=>ForgotScreen());
+                                },
                                 child: const Text(
                                   'Forgot password ?',
                                   style: TextStyle(
@@ -130,8 +136,24 @@ class _LoginPageState extends State<LoginPage> {
                             child: ElevatedButton(
                               onPressed: () {
                                 if(_formKey.currentState!.validate()){
+                                  FutureBuilder(
+                                  future: profileController.getCurrentUserDetails(),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return Center(child: CircularProgressIndicator());
+                                    } else if (snapshot.hasError) {
+                                      return Center(
+                                          child: Text('Error: ${snapshot.error}'));
+                                    } else if (!snapshot.hasData) {
+                                      return Center(child: Text('User not found'));
+                                    } else {
+                                      SharedPreferencesHelper.setUserName(userName: snapshot.data!['Name']);
+                                      return const SizedBox(height: 0,
+                                      width:0,);
+                                    }});
                                   FirebaseAuth.instance.signInWithEmailAndPassword(email: usernameController.text, password: passwordController.text).then((value) {
-                                  Navigator.pushReplacement(context,MaterialPageRoute(builder:(context)=>const HomePage()));
+                                  Get.off(()=>ToggleScreen());
                                   }).catchError((error){
                                     String errorMessage = "Invalid user credentials";
                                     if (error is FirebaseAuthException) {
@@ -193,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                           await value.user!.getIdToken();
                           //SharedPreferencesHelper.setUserName(userName:value.user!.displayName??"");
                           print('Loggedin');
-                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
+                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ToggleScreen()));
                         }else{
                           print("Something went wrong");
                         }
@@ -216,26 +238,24 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(top: 100, left: 50, right: 50),
-              child: Align(
-                alignment: Alignment.center,
-                child: Row(
-                  children: [
-                    const Text(
-                      'Do you have an account?',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    TextButton(
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder:(context)=>SignUpPage()));
-                        },
-                        child: const Text(
-                          "Sign Up",
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600),
-                        ))
-                  ],
-                ),
+              padding: const EdgeInsets.only(top: 100,),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Do you have an account?',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  TextButton(
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder:(context)=>SignUpPage()));
+                      },
+                      child: const Text(
+                        "Sign Up",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600),
+                      ))
+                ],
               ),
             )
           ],
